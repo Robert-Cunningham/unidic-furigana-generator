@@ -1,0 +1,1 @@
+# unidic-furigana-generator
