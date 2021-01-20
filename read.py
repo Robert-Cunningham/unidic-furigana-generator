@@ -1,5 +1,6 @@
 from fugashi import Tagger
 import jaconv
+import sys
 
 def is_kana(str):
     return not (jaconv.hira2kata(str) == str and jaconv.kata2hira(str) == str)
@@ -38,32 +39,39 @@ def split(surface, hiragana):
             out_hiragana.append(hiragana_group)
     return out_surface, out_hiragana
 
-print(split( "いちご狩り", "いちごががり"))
-print(split( "狩い狩ちご狩り9狩", "ががいがちごががりががが"))
+#print(split( "いちご狩り", "いちごががり"))
+#print(split( "狩い狩ちご狩り9狩", "ががいがちごががりががが"))
 
 tagger = Tagger('-Owakati')
 text = "麩菓子は、麩を主材料とした日本の菓子 9いちご狩り"
 
-out = tagger(text)
-all_surface = [x.surface for x in out]
-all_kana = [jaconv.kata2hira(x.feature.kana) if x.feature.kana else None for x in out]
 
-out = []
+def add_furigana(text):
+    out = tagger(text)
+    all_surface = [x.surface for x in out]
+    all_kana = [jaconv.kata2hira(x.feature.kana) if x.feature.kana else None for x in out]
 
-for (surface, hiragana) in zip(all_surface, all_kana):
-    print(surface, hiragana, is_kana(surface))
-    if (hiragana == "*" or hiragana == None):
-        out.append(surface)
-    elif (hiragana == surface):
-        out.append(surface)
-    elif (jaconv.hira2kata(hiragana) == surface):
-        out.append(surface)
-    else:
-        ss, sh = split(surface, hiragana)
-        for s, h in zip(ss, sh):
-            if is_kana(s):
-                out.append(s)
-            else:
-                out.append(f"<ruby>{s}<rt>{h}</rt></ruby>")
+    out = []
 
-print("".join(out))
+    for (surface, hiragana) in zip(all_surface, all_kana):
+        if (hiragana == "*" or hiragana == None):
+            out.append(surface)
+        elif (hiragana == surface):
+            out.append(surface)
+        elif (jaconv.hira2kata(hiragana) == surface):
+            out.append(surface)
+        else:
+            ss, sh = split(surface, hiragana)
+            for s, h in zip(ss, sh):
+                if is_kana(s):
+                    out.append(s)
+                else:
+                    out.append(f"<ruby>{s}<rt>{h}</rt></ruby>")
+
+    return "".join(out)
+
+#print(add_furigana(text))
+
+with open(sys.argv[1]) as f:
+    lines = f.read().split("\n")
+    [print(add_furigana(x)) for x in lines]
